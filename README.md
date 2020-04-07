@@ -1,0 +1,2 @@
+# DistCor
+Conditional Independence heuristics
