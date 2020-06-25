@@ -9,36 +9,47 @@ from functools import partial
 from pathlib import Path
 import sys
 
-def read_in_data(director, pair, i, nsamp, sigma):
-    joined_pairs = "-".join(pair)
-    test_stats = np.load(f"{director}{joined_pairs}_{i}_{sigma}_{nsamp}_STATS.npy")
-    times = np.load(f"{director}{joined_pairs}_{i}_{sigma}_{nsamp}_TIMES.npy")
-    backgrounds = np.load(f"{director}{joined_pairs}_{i}_{sigma}_{nsamp}_BACKGROUNDS.npy")
-    with open(f"{director}{joined_pairs}_{i}_{sigma}_{nsamp}_SUBSETS.txt", "r") as hand:
-        subsets = list(map(str.strip, hand.readlines()))
-    return test_stats, times, backgrounds, subsets
+def read_in_data(director, model_name, pair, conditioning_size, methods):
+    saving_prefix = director + model_name + "_" + "-".join(pair) + "_" + str(conditioning_size)
+    data = {}
+    for method in methods:
+        test_stats = np.load(f"{saving_prefix}_{method}_STATS.npy")
+        times = np.load(f"{saving_prefix}_{method}_TIMES.npy")
+        backgrounds = np.load(f"{saving_prefix}_{method}_BACKGROUNDS.npy")
+        with open(f"{saving_prefix}_{method}_SUBSETS.txt", "r") as hand:
+            subsets = list(map(str.strip, hand.readlines()))
+        if len(subsets) > 1 and subsets[-1] == "":
+            subsets = subsets[:-1]
+        data[method] = (test_stats, times, backgrounds, subsets)
 
 
 seed_val = 42
-nsamp = int(sys.argv[1])
-sigma = float(sys.argv[2])
-threshold = float(sys.argv[3])
-conditioning_size = int(sys.argv[4])
-where_to_dir = sys.argv[5] #"/media/piotrek/Seagate_Expansion_Drive/backgrounds_with_time/"
-file_name = sys.argv[6]
-pair = sorted(sys.argv[7].split("-"))
+Reps = int(sys.argv[1])
+model_name = sys.argv[2]
+where_to_dir = sys.argv[3]  # "/media/piotrek/Seagate_Expansion_Drive/backgrounds_with_time/"
+
+threshold = float(sys.argv[4])
+conditioning_size = int(sys.argv[5])
+pair = sorted(sys.argv[6].split("-"))
 where_to_plots = where_to_dir + "plots/"
 Path(where_to_plots).mkdir(parents=True, exist_ok=True)
 
+
+data = read_in_data(where_to_dir, model_name, pair, conditioning_size, ["DistCor", "DistResid", "partial_Cor"])
+
 test_stats, times, backgrounds, subsets = read_in_data(where_to_dir, pair, conditioning_size, nsamp, sigma)
 
-tstats, backs, tim, subs = zip(*sorted(zip(test_stats, backgrounds.tolist(), times.tolist(), subsets), reverse=True))
+sorted_data = sorted(zip(test_stats, backgrounds.tolist(), times.tolist(), subsets), reverse=True)
+for i in range(len(subsets)):
+    d = [sorted_data[i] for i in range(len(subsets)) if ((pair[0] not in sorted_data[i][-1]) and (pair[1] not in sorted_data[i][-1]))]
+tstats, backs, tim, subs = zip(*d)
 
 true_indep = []
-with open(where_to_dir + f"{file_name.split('.')[0]}_d-sep_independencies.txt", "r") as hand:
+threshold = 5
+with open(where_to_dir + f"{model_name}_d-sep_independencies.txt", "r") as hand:
     true_indep = list(map(str.strip, hand.readlines()))
 
-fig, axs = plt.subplots(len(tstats), sharex=True, gridspec_kw={'hspace': 0}, figsize=(10, 25))
+fig, axs = plt.subplots(len(tstats), sharex=True, gridspec_kw={'hspace': 0}, figsize=(10, 5 * len(tstats)))
 fig.suptitle(f'{pair[0]} conditionally dependent on {pair[1]} given {conditioning_size} variable{"s" if conditioning_size > 1 else ""}')
 true_pos = 0
 true_neg = 0
@@ -50,34 +61,73 @@ for i in range(len(tstats)):
     if (pair[0] in subs[i]) or (pair[1] in subs[i]) or (inde in true_indep):
         true_cond_indep = True
 
-    sns.distplot(backs[i], ax=axs[i], kde=False, bins=30)
-    axs[i].plot(tstats[i], 0, "o")
-    minimal, maximal = np.percentile(backs[i], threshold / 2), np.percentile(backs[i], 100 - (threshold / 2))
-    line_style = "-" if true_cond_indep else ":"
-    axs[i].axvline(minimal, ls=line_style)
-    axs[i].axvline(maximal, ls=line_style)
-    axs[i].set_ylabel(subs[i], rotation=0, labelpad=12 + len(subs[i]))
-    axs[i].set_yticks([])
-    estimated_independence = True
-    if (tstats[i] < minimal) or (maximal < tstats[i]):
-        estimated_independence = False
-    if true_cond_indep != estimated_independence:
-        axs[i].set_facecolor("#FFCCCC")
-    if true_cond_indep == estimated_independence and estimated_independence == True:
-        true_pos += 1
-    if true_cond_indep == estimated_independence and estimated_independence == False:
-        true_neg += 1
-    if true_cond_indep != estimated_independence and estimated_independence == True:
-        false_pos += 1
-    if true_cond_indep != estimated_independence and estimated_independence == False:
-        false_neg += 1
+    if len(tstats) == 1:
+        sns.distplot(backs[i], ax=axs, kde=False, bins=30)
+        axs.plot(tstats[i], 0, "o")
+        minimal, maximal = np.percentile(backs[i], threshold / 2), np.percentile(backs[i], 100 - (threshold / 2))
+        line_style = "-" if true_cond_indep else ":"
+        axs.axvline(minimal, ls=line_style)
+        axs.axvline(maximal, ls=line_style)
+        axs.set_ylabel(subs[i], rotation=0, labelpad=12 + len(subs[i]))
+        axs.set_yticks([])
+        estimated_independence = True
+        if (tstats[i] < minimal) or (maximal < tstats[i]):
+            estimated_independence = False
+        if true_cond_indep != estimated_independence:
+            axs.set_facecolor("#FFCCCC")
+        if true_cond_indep == estimated_independence and estimated_independence == True:
+            true_pos += 1
+        if true_cond_indep == estimated_independence and estimated_independence == False:
+            true_neg += 1
+        if true_cond_indep != estimated_independence and estimated_independence == True:
+            false_pos += 1
+        if true_cond_indep != estimated_independence and estimated_independence == False:
+            false_neg += 1
 
-# Hide x labels and tick labels for all but bottom plot.
-for ax in axs:
-    ax.label_outer()
+    else:    
+        sns.distplot(backs[i], ax=axs[i], kde=False, bins=30)
+        axs[i].plot(tstats[i], 0, "o")
+        minimal, maximal = np.percentile(backs[i], threshold / 2), np.percentile(backs[i], 100 - (threshold / 2))
+        line_style = "-" if true_cond_indep else ":"
+        axs[i].axvline(minimal, ls=line_style)
+        axs[i].axvline(maximal, ls=line_style)
+        axs[i].set_ylabel(subs[i], rotation=0, labelpad=12 + len(subs[i]))
+        axs[i].set_yticks([])
+        estimated_independence = True
+        if (tstats[i] < minimal) or (maximal < tstats[i]):
+            estimated_independence = False
+        if true_cond_indep != estimated_independence:
+            axs[i].set_facecolor("#FFCCCC")
+        if true_cond_indep == estimated_independence and estimated_independence == True:
+            true_pos += 1
+        if true_cond_indep == estimated_independence and estimated_independence == False:
+            true_neg += 1
+        if true_cond_indep != estimated_independence and estimated_independence == True:
+            false_pos += 1
+        if true_cond_indep != estimated_independence and estimated_independence == False:
+            false_neg += 1
 
-plt.savefig(where_to_plots + f"{pair[0]}_{pair[1]}_cond_{conditioning_size}.png")
-fig = plt.figure()
-plt.title(f'{pair[0]} conditionally dependent on {pair[1]} given {conditioning_size} variable{"s" if conditioning_size > 1 else ""}')
-sns.heatmap(np.array([[true_pos, false_neg], [false_pos, true_neg]]), annot=True, fmt="d", cmap="Reds")
-plt.savefig(where_to_plots + f"{pair[0]}_{pair[1]}_cond_{conditioning_size}_confusion.png")
+	# Hide x labels and tick labels for all but bottom plot.
+	for ax in axs:
+	    ax.label_outer()
+
+    plt.savefig(where_to_plots + f"{model_name}_{method}_{pair[0]}_{pair[1]}_cond_{conditioning_size}.png")
+    fig = plt.figure()
+    if method == "DistCor":
+        if conditioning_size == 0:
+            method_desc = "Distance Covariance"
+        else:
+            method_desc = "Partial Distance Covariance"
+    elif method == "DistResid":
+        if conditioning_size == 0:
+            method_desc = "Correlation of UCDM"
+        else:
+            method_desc = "Partial Correlation of UCDM"
+    else:
+        if conditioning_size == 0:
+            method_desc = "Correlation"
+        else:
+            method_desc = "Partial Correlation
+    plt.title(f'Test of {method_desc} = 0 for {pair[0]} and {pair[1]} controlling for {conditioning_size} other variable{"s" if conditioning_size > 1 else ""}')
+    sns.heatmap(np.array([[true_pos, false_neg], [false_pos, true_neg]]), annot=True, fmt="d", cmap="Reds")
+    plt.savefig(where_to_plots + f"{method}_{pair[0]}_{pair[1]}_cond_{conditioning_size}_confusion.png")
