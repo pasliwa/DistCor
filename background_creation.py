@@ -53,13 +53,10 @@ def time_backs_distance_resid_cor(pair, cond, data_fr, Reps=500):
 
 seed_val = 42
 Reps = int(sys.argv[1])
-nsamp = int(sys.argv[2])
-sigma = float(sys.argv[3])
-min_conditioning_size = int(sys.argv[4])
-max_conditioning_size = int(sys.argv[5])
-where_to_dir = sys.argv[6]  # "/media/piotrek/Seagate_Expansion_Drive/backgrounds_with_time/"
-file_name = sys.argv[7]
-
+min_conditioning_size = int(sys.argv[2])
+max_conditioning_size = int(sys.argv[3])
+file_name = sys.argv[4]
+where_to_dir = sys.argv[5]  # "/media/piotrek/Seagate_Expansion_Drive/backgrounds_with_time/"
 
 Path(where_to_dir).mkdir(parents=True, exist_ok=True)
 
@@ -73,7 +70,7 @@ dot.directory = where_to_dir
 dot.format = 'png'
 dot.filename = file_name.split(".")[0] 
 dot.render()
-data_fr.to_csv(where_to_dir + f"data_for_{file_name}_{nsamp}_{sigma}.csv")
+data_fr.to_csv(where_to_dir + f"data_for_{file_name}.csv")
 independencies = Bayesian_network.get_all_independence_relationships()
 
 indep_li = []
@@ -98,7 +95,7 @@ for pair in findsubsets(data_fr.columns, 2):
             backgrounds.append(backs)
 
 ######### SAVING RESULTS ###############
-        saving_prefix = "-".join(pair) + "_" + str(i) + "_" + str(sigma) + "_" + str(nsamp) + "_DistCor"
+        saving_prefix = "-".join(pair) + "_" + str(i) + "_" + "_DistCor"
 
         saving_name = saving_prefix + "_BACKGROUNDS.npy"
         with open(where_to_dir + saving_name, "wb+") as backgrounds_file:
@@ -129,7 +126,7 @@ for pair in findsubsets(data_fr.columns, 2):
             backgrounds.append(backs)
 
 ######### SAVING RESULTS ###############
-        saving_prefix = "-".join(pair) + "_" + str(i) + "_" + str(sigma) + "_" + str(nsamp) + "_partial_Cor"
+        saving_prefix = "-".join(pair) + "_" + str(i) + "_" + "_partial_Cor"
 
         saving_name = saving_prefix + "_BACKGROUNDS.npy"
         with open(where_to_dir + saving_name, "wb+") as backgrounds_file:
@@ -160,7 +157,7 @@ for pair in findsubsets(data_fr.columns, 2):
             backgrounds.append(backs)
 
 ######### SAVING RESULTS ###############
-        saving_prefix = "-".join(pair) + "_" + str(i) + "_" + str(sigma) + "_" + str(nsamp) + "_DistResid"
+        saving_prefix = "-".join(pair) + "_" + str(i) + "_" + "_DistResid"
 
         saving_name = saving_prefix + "_BACKGROUNDS.npy"
         with open(where_to_dir + saving_name, "wb+") as backgrounds_file:
