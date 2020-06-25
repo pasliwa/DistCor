@@ -92,3 +92,11 @@ def background_null_partial_correlation(x, y, z, data, Reps=100):
         background_statistic = partial_correlation(shuffled_X, Y, Z)
         backgrounds.append(background_statistic)
     return backgrounds
+
+def test_distance_resid_correlation_cond_Z(x, y, z, data, model = linear_model.LassoLarsCV(), Reps=100):
+    return test_stat_distance_resid_correlation(x, y, z, data, model, Reps), \
+           background_null_distance_resid_correlation(x, y, z, data, model, Reps)
+
+def test_partial_correlation_cond_Z(x, y, z, data, Reps=100):
+    return test_stat_partial_correlation(x, y, z, data, Reps), \
+           background_null_partial_correlation(x, y, z, data, Reps)

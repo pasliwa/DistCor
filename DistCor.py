@@ -83,7 +83,7 @@ def pdcov_test_statistic(x, y, z):
     return test_stat, Pz_x, Pz_y
 
 
-def squared_pop_dcov_pval(x, y, Reps=100):
+def squared_pop_dCov_with_background(x, y, Reps=100):
     n = x.shape[0]
     test_stat, UCM_A, UCM_B = dcov_test_statistic(x, y)
 
@@ -97,7 +97,7 @@ def squared_pop_dcov_pval(x, y, Reps=100):
     return test_stat, backgrounds
 
 
-def give_pval_pdCov(x, y, z, Reps=100):
+def pdCov_with_background(x, y, z, Reps=100):
     n = x.shape[0]
     test_stat, Pz_x, Pz_y = pdcov_test_statistic(x, y, z)
 
@@ -111,17 +111,17 @@ def give_pval_pdCov(x, y, z, Reps=100):
     return test_stat, backgrounds
 
 
-def test_independence_cond_Z(x, y, z, data, Reps=500):
+def test_partial_dCov_cond_Z(x, y, z, data, Reps=500):
     X = np.vstack(np.vstack([data[i] for i in x])).T
     Y = np.vstack(np.vstack([data[i] for i in y])).T
     if z:
         Z = np.vstack(np.vstack([data[i] for i in z])).T
-        return give_pval_pdCov(X, Y, Z, Reps)
+        return pdCov_with_background(X, Y, Z, Reps)
     else:
-        return squared_pop_dcov_pval(X, Y, Reps)
+        return squared_pop_dCov_with_background(X, Y, Reps)
 
 
-def squared_pop_dcov_test_stat(x, y):
+def test_stat_squared_pop_dCov(x, y):
     n = x.shape[0]
     UCM_A = U_centered_matrix(dist_matrix(x))
     UCM_B = U_centered_matrix(dist_matrix(y))
@@ -130,7 +130,7 @@ def squared_pop_dcov_test_stat(x, y):
     return test_stat
 
 
-def give_test_stat_pdCov(x, y, z):
+def test_stat_pdCov(x, y, z):
     n = x.shape[0]
 
     UCM_A = U_centered_matrix(dist_matrix(x))
@@ -148,6 +148,6 @@ def give_test_statistic(x, y, z, data):
     Y = np.vstack(np.vstack([data[i] for i in y])).T
     if z:
         Z = np.vstack(np.vstack([data[i] for i in z])).T
-        return give_test_stat_pdCov(X, Y, Z)
+        return test_stat_pdCov(X, Y, Z)
     else:
-        return squared_pop_dcov_test_stat(X, Y)
+        return test_stat_squared_pop_dCov(X, Y)
