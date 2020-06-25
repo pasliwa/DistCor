@@ -44,7 +44,7 @@ def time_backs_partial_cor(pair, cond, data_fr, Reps=500):
 
 
 def time_backs_distance_resid_cor(pair, cond, data_fr, Reps=500):
-    s_test = partial(RegDep.test_stat_distance_resid_correlation, x = list(pair[0]),
+    s_test = partial(RegDep.test_distance_resid_correlation_cond_Z, x = list(pair[0]),
                      y = list(pair[1]), z = cond, data = data_fr, model=linear_model.LassoLarsCV(), Reps = Reps)
     t = timeit.Timer(s_test)
     time_, (test_stat, backs) = t.timeit(number=1)
@@ -70,7 +70,7 @@ dot.directory = where_to_dir
 dot.format = 'png'
 dot.filename = file_name.split(".")[0] 
 dot.render()
-data_fr.to_csv(where_to_dir + f"data_for_{file_name}.csv")
+data_fr.to_csv(where_to_dir + f"data_for_{file_name.split('.')[0]}.csv")
 independencies = Bayesian_network.get_all_independence_relationships()
 
 indep_li = []
@@ -82,6 +82,7 @@ with open(where_to_dir + f"{file_name.split('.')[0]}_d-sep_independencies.txt", 
     print("".join(sorted_indep_list), file=out)
 
 for pair in findsubsets(data_fr.columns, 2):
+    print(file_name, pair)
     for i in range(min_conditioning_size, max_conditioning_size):
         conditioning_subsets = findsubsets(data_fr.columns, i)
 
@@ -95,7 +96,7 @@ for pair in findsubsets(data_fr.columns, 2):
             backgrounds.append(backs)
 
 ######### SAVING RESULTS ###############
-        saving_prefix = "-".join(pair) + "_" + str(i) + "_" + "_DistCor"
+        saving_prefix = file_name.split(".")[0] + "_" + "-".join(pair) + "_" + str(i) + "_DistCor"
 
         saving_name = saving_prefix + "_BACKGROUNDS.npy"
         with open(where_to_dir + saving_name, "wb+") as backgrounds_file:
@@ -126,7 +127,7 @@ for pair in findsubsets(data_fr.columns, 2):
             backgrounds.append(backs)
 
 ######### SAVING RESULTS ###############
-        saving_prefix = "-".join(pair) + "_" + str(i) + "_" + "_partial_Cor"
+        saving_prefix = file_name.split(".")[0] + "_" + "-".join(pair) + "_" + str(i) + "_partial_Cor"
 
         saving_name = saving_prefix + "_BACKGROUNDS.npy"
         with open(where_to_dir + saving_name, "wb+") as backgrounds_file:
@@ -157,7 +158,7 @@ for pair in findsubsets(data_fr.columns, 2):
             backgrounds.append(backs)
 
 ######### SAVING RESULTS ###############
-        saving_prefix = "-".join(pair) + "_" + str(i) + "_" + "_DistResid"
+        saving_prefix = file_name.split(".")[0] + "_" + "-".join(pair) + "_" + str(i) + "_DistResid"
 
         saving_name = saving_prefix + "_BACKGROUNDS.npy"
         with open(where_to_dir + saving_name, "wb+") as backgrounds_file:
