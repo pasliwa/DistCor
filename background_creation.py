@@ -68,7 +68,7 @@ dot = Bayesian_network.draw()
 dot.name = file_name.split('.')[0]
 dot.directory = where_to_dir
 dot.format = 'png'
-dot.filename = file_name.split(".")[0] 
+dot.filename = file_name.split(".")[0]
 dot.render()
 data_fr.to_csv(where_to_dir + f"data_for_{file_name.split('.')[0]}.csv")
 independencies = Bayesian_network.get_all_independence_relationships()
@@ -84,8 +84,10 @@ with open(where_to_dir + f"{file_name.split('.')[0]}_d-sep_independencies.txt", 
 for pair in findsubsets(data_fr.columns, 2):
     print(file_name, pair)
     for i in range(min_conditioning_size, max_conditioning_size):
-        conditioning_subsets = findsubsets(data_fr.columns, i)
-
+        possible_conditionings = sorted(list(set(data_fr.columns) - set(pair)))
+        conditioning_subsets = findsubsets(possible_conditionings, i)
+        if len(conditioning_subsets) == 0:
+            continue
         times = []
         test_stats = []
         backgrounds = []
