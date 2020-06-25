@@ -22,7 +22,6 @@ def inner(_it, _timer{init}):
 """
 
 
-
 def findsubsets(s, n):
     return list(map(list, itertools.combinations(s, n)))
 

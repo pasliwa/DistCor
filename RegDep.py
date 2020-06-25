@@ -4,7 +4,7 @@ import DistCor
 from functools import partial
 
 
-def prepare_data_for_regressive_stat(x, y, z, data):
+def prepare_data_for_regression_stat(x, y, z, data):
     X = np.vstack(np.vstack([data[i] for i in x])).T
     Y = np.vstack(np.vstack([data[i] for i in y])).T
     if z:
@@ -31,7 +31,7 @@ def partial_correlation(X, Y, Z):
 
 
 def test_stat_partial_correlation(x, y, z, data):
-    X, Y, Z = prepare_data_for_regressive_stat(x, y, z, data)
+    X, Y, Z = prepare_data_for_regression_stat(x, y, z, data)
     return partial_correlation(X, Y, Z)
 
 
@@ -47,7 +47,7 @@ def distance_resid_correlation(X, Y, Z, model):
 
 
 def test_stat_distance_resid_correlation(x, y, z, data, model=linear_model.LassoLarsCV()):
-    X, Y, Z = prepare_data_for_regressive_stat(x, y, z, data)
+    X, Y, Z = prepare_data_for_regression_stat(x, y, z, data)
     return distance_resid_correlation(X, Y, Z, model)
 
 
@@ -55,7 +55,7 @@ def background_null_distance_resid_correlation(x, y, z, data, model=linear_model
     n = x.shape[0]
     backgrounds = []
 
-    X, Y, Z = prepare_data_for_regressive_stat(x, y, z, data)
+    X, Y, Z = prepare_data_for_regression_stat(x, y, z, data)
     UCM_A = DistCor.U_centered_matrix(DistCor.dist_matrix(X))
     U_vector_B = DistCor.U_centered_matrix(DistCor.dist_matrix(Y)).flatten('F').reshape(-1, 1)
 
@@ -82,7 +82,7 @@ def background_null_partial_correlation(x, y, z, data, Reps=100):
     n = x.shape[0]
     backgrounds = []
 
-    X, Y, Z = prepare_data_for_regressive_stat(x, y, z, data)
+    X, Y, Z = prepare_data_for_regression_stat(x, y, z, data)
 
     indices = np.arange(n)
 

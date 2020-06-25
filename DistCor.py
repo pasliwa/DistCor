@@ -30,7 +30,7 @@ def D_centered_matrix(a):
     n = a.shape[0]
     sumcol = a.sum(axis=0)
     grandsum = sumcol.sum()
-    return a - (sumcol / (n)) - (sumcol[:, np.newaxis] / (n)) + (grandsum / (n ** 2))
+    return a - (sumcol / n) - (sumcol[:, np.newaxis] / n) + (grandsum / (n ** 2))
 
 
 def inner_product(A, B):
@@ -45,10 +45,21 @@ def project(A, C, threshold=0.000001):
         return A - (inner_product(A, C) / inner_product(C, C)) * C
 
 
-def squared_pop_dcov(x, y):
+def squared_pop_dCov(x, y):
     UCM_A = U_centered_matrix(dist_matrix(x))
     UCM_B = U_centered_matrix(dist_matrix(y))
     return inner_product(UCM_A, UCM_B)
+
+
+def pdCov(x, y, z):
+    UCM_A = U_centered_matrix(dist_matrix(x))
+    UCM_B = U_centered_matrix(dist_matrix(y))
+    UCM_C = U_centered_matrix(dist_matrix(z))
+
+    Pz_x = project(UCM_A, UCM_C)
+    Pz_y = project(UCM_B, UCM_C)
+    return inner_product(Pz_x, Pz_y)
+
 
 def dcov_test_statistic(x, y):
     n = x.shape[0]
@@ -57,6 +68,7 @@ def dcov_test_statistic(x, y):
 
     test_stat = n * inner_product(UCM_A, UCM_B)
     return test_stat, UCM_A, UCM_B
+
 
 def pdcov_test_statistic(x, y, z):
     n = x.shape[0]
@@ -70,6 +82,7 @@ def pdcov_test_statistic(x, y, z):
     test_stat = n * inner_product(Pz_x, Pz_y)  # n * pdCov(x, y, z)
     return test_stat, Pz_x, Pz_y
 
+
 def squared_pop_dcov_pval(x, y, Reps=100):
     n = x.shape[0]
     test_stat, UCM_A, UCM_B = dcov_test_statistic(x, y)
@@ -82,17 +95,6 @@ def squared_pop_dcov_pval(x, y, Reps=100):
         background_statistic = n * inner_product(UCM_A[:, indices][indices], UCM_B)
         backgrounds.append(background_statistic)
     return test_stat, backgrounds
-
-
-def pdCov(x, y, z):
-    UCM_A = U_centered_matrix(dist_matrix(x))
-    UCM_B = U_centered_matrix(dist_matrix(y))
-    UCM_C = U_centered_matrix(dist_matrix(z))
-
-    Pz_x = project(UCM_A, UCM_C)
-    Pz_y = project(UCM_B, UCM_C)
-
-    return inner_product(Pz_x, Pz_y)
 
 
 def give_pval_pdCov(x, y, z, Reps=100):
