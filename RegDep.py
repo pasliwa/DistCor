@@ -20,6 +20,8 @@ def reg_correlation(X, Y, Z, model=linear_model.LassoLarsCV()):
 
     model.fit(Z, Y.ravel())
     Y_res = Y.ravel() - model.predict(Z)
+    if np.isclose(np.linalg.norm(X_res), 0) or np.isclose(np.linalg.norm(Y_res), 0):
+        return 0
     return np.corrcoef(X_res.flatten(), Y_res.flatten())[0][1]
 
 
@@ -27,7 +29,7 @@ def partial_correlation(X, Y, Z):
     if Z is not None:
         return reg_correlation(X, Y, Z, model=linear_model.LinearRegression())
     else:
-        return np.corrcoef(X, Y)[0][1]
+        return np.corrcoef(X.flatten(), Y.flatten())[0][1]
 
 
 def test_stat_partial_correlation(x, y, z, data):
@@ -43,10 +45,10 @@ def distance_resid_correlation(X, Y, Z, model):
     U_vector_B = UCMD_B[triu_indices].reshape(-1, 1)
     if Z is not None:
         UCMD_Cs = list(map(DistCor.U_centered_matrix, map(DistCor.dist_matrix, Z.T)))
-        U_matrix_C = np.vstack([UCMD_Cs[i][triu_indices] for i in range(len(indices))]).T
+        U_matrix_C = np.vstack([UCMD_Cs[i][triu_indices] for i in range(len(UCMD_Cs))]).T
         return reg_correlation(U_vector_A, U_vector_B, U_matrix_C, model)
     else:
-        return np.corrcoef(U_vector_A, U_vector_B)[0][1]
+        return np.corrcoef(U_vector_A.flatten(), U_vector_B.flatten())[0][1]
 
 
 def test_stat_distance_resid_correlation(x, y, z, data, model=linear_model.LassoLarsCV()):
@@ -68,10 +70,10 @@ def background_null_distance_resid_correlation(x, y, z, data, model=linear_model
 
     if Z is not None:
         UCMD_Cs = list(map(DistCor.U_centered_matrix, map(DistCor.dist_matrix, Z.T)))
-        U_matrix_C = np.vstack([UCMD_Cs[i][triu_indices] for i in range(len(dists))]).T
+        U_matrix_C = np.vstack([UCMD_Cs[i][triu_indices] for i in range(len(UCMD_Cs))]).T
         for i in range(Reps):
             np.random.shuffle(indices)
-            shuffled_UCMD_A = UCM_A[:, indices][indices]
+            shuffled_UCMD_A = UCMD_A[:, indices][indices]
             shuffled_U_vector_A = shuffled_UCMD_A[triu_indices].reshape(-1, 1)
 
             background_statistic = reg_correlation(shuffled_U_vector_A, U_vector_B, U_matrix_C, model)
@@ -79,9 +81,9 @@ def background_null_distance_resid_correlation(x, y, z, data, model=linear_model
     else:
         for i in range(Reps):
             np.random.shuffle(indices)
-            shuffled_UCMD_A = UCM_A[:, indices][indices]
+            shuffled_UCMD_A = UCMD_A[:, indices][indices]
             shuffled_U_vector_A = shuffled_UCMD_A[triu_indices].reshape(-1, 1)
-            background_statistic = np.corrcoef(shuffled_U_vector_A, U_vector_B)[0][1]
+            background_statistic = np.corrcoef(shuffled_U_vector_A.flatten(), U_vector_B.flatten())[0][1]
             backgrounds.append(background_statistic)
     return backgrounds
 
