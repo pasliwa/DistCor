@@ -24,7 +24,7 @@ def reg_correlation(X, Y, Z, model=linear_model.LassoLarsCV()):
 
 
 def partial_correlation(X, Y, Z):
-    if Z:
+    if Z is not None:
         return reg_correlation(X, Y, Z, model=linear_model.LinearRegression())
     else:
         return np.corrcoef(X, Y)[0][1]
@@ -36,11 +36,14 @@ def test_stat_partial_correlation(x, y, z, data):
 
 
 def distance_resid_correlation(X, Y, Z, model):
-    U_vector_A = DistCor.U_centered_matrix(DistCor.dist_matrix(X)).flatten('F').reshape(-1, 1)
-    U_vector_B = DistCor.U_centered_matrix(DistCor.dist_matrix(Y)).flatten('F').reshape(-1, 1)
-    if Z:
-        flatten = partial(np.ndarray.flatten, order="F")
-        U_matrix_C = np.vstack(list(map(flatten, map(DistCor.U_centered_matrix, map(DistCor.dist_matrix, Z.T))))).T
+    UCMD_A = DistCor.U_centered_matrix(DistCor.dist_matrix(X))
+    UCMD_B = DistCor.U_centered_matrix(DistCor.dist_matrix(Y))
+    triu_indices = np.triu_indices_from(UCMD_A, k=1)
+    U_vector_A = UCMD_A[triu_indices].reshape(-1, 1)
+    U_vector_B = UCMD_B[triu_indices].reshape(-1, 1)
+    if Z is not None:
+        UCMD_Cs = list(map(DistCor.U_centered_matrix, map(DistCor.dist_matrix, Z.T)))
+        U_matrix_C = np.vstack([UCMD_Cs[i][triu_indices] for i in range(len(indices))]).T
         return reg_correlation(U_vector_A, U_vector_B, U_matrix_C, model)
     else:
         return np.corrcoef(U_vector_A, U_vector_B)[0][1]
@@ -52,38 +55,42 @@ def test_stat_distance_resid_correlation(x, y, z, data, model=linear_model.Lasso
 
 
 def background_null_distance_resid_correlation(x, y, z, data, model=linear_model.LassoLarsCV(), Reps=100):
-    n = x.shape[0]
     backgrounds = []
 
     X, Y, Z = prepare_data_for_regression_stat(x, y, z, data)
-    UCM_A = DistCor.U_centered_matrix(DistCor.dist_matrix(X))
-    U_vector_B = DistCor.U_centered_matrix(DistCor.dist_matrix(Y)).flatten('F').reshape(-1, 1)
+    n = X.shape[0]
+    UCMD_A = DistCor.U_centered_matrix(DistCor.dist_matrix(X))
+    triu_indices = np.triu_indices_from(UCMD_A, k=1)
+    UCMD_B = DistCor.U_centered_matrix(DistCor.dist_matrix(Y))
+    U_vector_B = UCMD_B[triu_indices].reshape(-1, 1)
 
     indices = np.arange(n)
 
-    if Z:
-        flatten = partial(np.ndarray.flatten, order="F")
-        U_matrix_C = np.vstack(list(map(flatten, map(DistCor.U_centered_matrix, map(DistCor.dist_matrix, Z.T))))).T
+    if Z is not None:
+        UCMD_Cs = list(map(DistCor.U_centered_matrix, map(DistCor.dist_matrix, Z.T)))
+        U_matrix_C = np.vstack([UCMD_Cs[i][triu_indices] for i in range(len(dists))]).T
         for i in range(Reps):
             np.random.shuffle(indices)
-            shuffled_U_vector_A = UCM_A[:, indices][indices].flatten('F').reshape(-1, 1)
+            shuffled_UCMD_A = UCM_A[:, indices][indices]
+            shuffled_U_vector_A = shuffled_UCMD_A[triu_indices].reshape(-1, 1)
+
             background_statistic = reg_correlation(shuffled_U_vector_A, U_vector_B, U_matrix_C, model)
             backgrounds.append(background_statistic)
     else:
         for i in range(Reps):
             np.random.shuffle(indices)
-            shuffled_U_vector_A = UCM_A[:, indices][indices].flatten('F').reshape(-1, 1)
+            shuffled_UCMD_A = UCM_A[:, indices][indices]
+            shuffled_U_vector_A = shuffled_UCMD_A[triu_indices].reshape(-1, 1)
             background_statistic = np.corrcoef(shuffled_U_vector_A, U_vector_B)[0][1]
             backgrounds.append(background_statistic)
     return backgrounds
 
 
 def background_null_partial_correlation(x, y, z, data, Reps=100):
-    n = x.shape[0]
     backgrounds = []
 
     X, Y, Z = prepare_data_for_regression_stat(x, y, z, data)
-
+    n = X.shape[0]
     indices = np.arange(n)
 
     for i in range(Reps):
@@ -94,9 +101,9 @@ def background_null_partial_correlation(x, y, z, data, Reps=100):
     return backgrounds
 
 def test_distance_resid_correlation_cond_Z(x, y, z, data, model = linear_model.LassoLarsCV(), Reps=100):
-    return test_stat_distance_resid_correlation(x, y, z, data, model, Reps), \
+    return test_stat_distance_resid_correlation(x, y, z, data, model), \
            background_null_distance_resid_correlation(x, y, z, data, model, Reps)
 
 def test_partial_correlation_cond_Z(x, y, z, data, Reps=100):
-    return test_stat_partial_correlation(x, y, z, data, Reps), \
+    return test_stat_partial_correlation(x, y, z, data), \
            background_null_partial_correlation(x, y, z, data, Reps)
