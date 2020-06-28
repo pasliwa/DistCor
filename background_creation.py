@@ -71,15 +71,7 @@ dot.format = 'png'
 dot.filename = file_name.split(".")[0]
 dot.render()
 data_fr.to_csv(where_to_dir + f"data_for_{file_name.split('.')[0]}.csv")
-independencies = Bayesian_network.get_all_independence_relationships()
 
-indep_li = []
-for indep in independencies:
-    letters = sorted(list(indep[2]))
-    indep_li.append("-".join([indep[0], indep[1]]) + "_" + "-".join(letters) + "\n")
-sorted_indep_list = sorted(indep_li)
-with open(where_to_dir + f"{file_name.split('.')[0]}_d-sep_independencies.txt", "w+") as out:
-    print("".join(sorted_indep_list), file=out)
 
 for pair in findsubsets(data_fr.columns, 2):
     print(file_name, pair)

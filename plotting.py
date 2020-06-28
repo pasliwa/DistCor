@@ -126,9 +126,9 @@ for method in methods:
             for ax in axs:
                 ax.label_outer()
 
-        plt.savefig(where_to_plots + f"{model_name}_{method}_{pair[0]}_{pair[1]}_cond_{conditioning_size}.png")
-        fig = plt.figure()
+    plt.savefig(where_to_plots + f"{model_name}_{method}_{pair[0]}_{pair[1]}_cond_{conditioning_size}.png")
+    fig = plt.figure()
 
-        plt.title(f'Test of {method_desc} = 0 for {pair[0]} and {pair[1]} controlling for {conditioning_size} other variable{"s" if conditioning_size > 1 else ""}')
-        sns.heatmap(np.array([[true_pos, false_neg], [false_pos, true_neg]]), annot=True, fmt="d", cmap="Reds")
-        plt.savefig(where_to_plots + f"{method}_{pair[0]}_{pair[1]}_cond_{conditioning_size}_confusion.png")
+    plt.title(f'Test of {method_desc} = 0 for {pair[0]} and {pair[1]} controlling for {conditioning_size} other variable{"s" if conditioning_size > 1 else ""}')
+    sns.heatmap(np.array([[true_pos, false_neg], [false_pos, true_neg]]), annot=True, fmt="d", cmap="Reds")
+    plt.savefig(where_to_plots + f"{method}_{pair[0]}_{pair[1]}_cond_{conditioning_size}_confusion.png")
