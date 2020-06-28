@@ -1,0 +1,10 @@
+random_seed: 45
+variable_names: A B C D E
+number_of_samples: 30
+normal_noise: 0 3
+number_of_generating_functions: 1
+A -5 5
+B = 2 * A**2
+C = 3 * A**2 + 1
+D = -2 * A**2 - 15
+E = B**2 + -3 * C**2 + 2 * D**2
