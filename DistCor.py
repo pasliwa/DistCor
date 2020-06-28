@@ -8,7 +8,9 @@ def dist_matrix(X):
     if len(X.shape) == 1:
         X = X[:, np.newaxis]
     s = np.sum(X ** 2, axis=1)
-    return np.sqrt(s + s[:, np.newaxis] - 2 * np.dot(X, X.T))
+    squared_distance = s + s[:, np.newaxis] - 2 * np.dot(X, X.T)
+    squared_distance[np.isclose(squared_distance, 0)] = 0
+    return np.sqrt(squared_distance)
 
 
 def U_centered_matrix(a):
