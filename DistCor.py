@@ -10,6 +10,7 @@ def dist_matrix(X):
     s = np.sum(X ** 2, axis=1)
     squared_distance = s + s[:, np.newaxis] - 2 * np.dot(X, X.T)
     squared_distance[np.isclose(squared_distance, 0)] = 0
+    np.fill_diagonal(squared_distance, 0)
     return np.sqrt(squared_distance)
 
 
