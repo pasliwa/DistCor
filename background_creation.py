@@ -45,7 +45,7 @@ def time_backs_partial_cor(pair, cond, data_fr, Reps=500):
 
 def time_backs_distance_resid_cor(pair, cond, data_fr, Reps=500):
     s_test = partial(RegDep.test_distance_resid_correlation_cond_Z, x = list(pair[0]),
-                     y = list(pair[1]), z = cond, data = data_fr, model=linear_model.LassoLarsCV(), Reps = Reps)
+                     y = list(pair[1]), z = cond, data = data_fr, model=linear_model.LassoLarsCV(normalize=False), Reps = Reps)
     t = timeit.Timer(s_test)
     time_, (test_stat, backs) = t.timeit(number=1)
     return time_, test_stat, backs
