@@ -1,7 +1,7 @@
 random_seed: 45
 variable_names: A B C D E F G H
 number_of_samples: 10
-normal_noise: 0 3
+normal_noise: 0 5
 number_of_generating_functions: 2
 A -15 15
 B -15 15
@@ -9,5 +9,5 @@ C = 3 * A + 1
 D = 5 * A + -2 * B - 15
 E = -3 * C + 2 * D + 20
 F = 0.5 * E + 5
-G = 2 * E - 5
-H = -5 * F + 10 * G + 3 
+G = (2 * E - 5) / 5
+H = (-5 * F + 10 * G + 3) / 10 
