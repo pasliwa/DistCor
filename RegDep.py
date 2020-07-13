@@ -25,6 +25,17 @@ def reg_correlation(X, Y, Z, model=linear_model.LassoLarsCV()):
     return np.corrcoef(X_res.flatten(), Y_res.flatten())[0][1]
 
 
+def reg_correlation_with_residuals(X, Y, Z, model=linear_model.LassoLarsCV()):
+    model.fit(Z, X.ravel())
+    X_res = X.ravel() - model.predict(Z)
+
+    model.fit(Z, Y.ravel())
+    Y_res = Y.ravel() - model.predict(Z)
+    if np.isclose(np.linalg.norm(X_res), 0) or np.isclose(np.linalg.norm(Y_res), 0):
+        return 0
+    return np.corrcoef(X_res.flatten(), Y_res.flatten())[0][1], X_res, Y_res
+
+
 def partial_correlation(X, Y, Z):
     if Z is not None:
         return reg_correlation(X, Y, Z, model=linear_model.LinearRegression())
@@ -47,6 +58,20 @@ def distance_resid_correlation(X, Y, Z, model):
         UCMD_Cs = list(map(DistCor.U_centered_matrix, map(DistCor.dist_matrix, Z.T)))
         U_matrix_C = np.vstack([UCMD_Cs[i][triu_indices] for i in range(len(UCMD_Cs))]).T
         return reg_correlation(U_vector_A, U_vector_B, U_matrix_C, model)
+    else:
+        return np.corrcoef(U_vector_A.flatten(), U_vector_B.flatten())[0][1]
+
+
+def distance_resid_correlation_with_residuals(X, Y, Z, model):
+    UCMD_A = DistCor.U_centered_matrix(DistCor.dist_matrix(X))
+    UCMD_B = DistCor.U_centered_matrix(DistCor.dist_matrix(Y))
+    triu_indices = np.triu_indices_from(UCMD_A, k=1)
+    U_vector_A = UCMD_A[triu_indices].reshape(-1, 1)
+    U_vector_B = UCMD_B[triu_indices].reshape(-1, 1)
+    if Z is not None:
+        UCMD_Cs = list(map(DistCor.U_centered_matrix, map(DistCor.dist_matrix, Z.T)))
+        U_matrix_C = np.vstack([UCMD_Cs[i][triu_indices] for i in range(len(UCMD_Cs))]).T
+        return reg_correlation_with_residuals(U_vector_A, U_vector_B, U_matrix_C, model)
     else:
         return np.corrcoef(U_vector_A.flatten(), U_vector_B.flatten())[0][1]
 
