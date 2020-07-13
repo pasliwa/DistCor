@@ -1,0 +1,9 @@
+random_seed: 45
+variable_names: A B C D
+number_of_samples: 150
+normal_noise: 0 15
+number_of_generating_functions: 1
+A -15 15
+B = 2 * A
+C = 3 * A + 1
+D = -2 * B + -3 * C
